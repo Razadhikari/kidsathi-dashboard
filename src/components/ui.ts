@@ -10,3 +10,5 @@ export const secondaryButton = "h-11 px-5 rounded-xl border border-[#1F2A5C] tex
 export const dangerButton = "h-11 px-5 rounded-xl border border-[#B4233C] text-[#B4233C] font-bold bg-white";
 export const muted = "text-[#5B6170]";
 export const errorStyle = "text-sm text-[#B4233C]";
+export const smallInput =
+  "h-9 px-3 rounded-lg border border-[#D9D2C4] bg-white text-sm font-normal outline-none focus:border-[#1F2A5C]";

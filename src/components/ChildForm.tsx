@@ -1,9 +1,11 @@
 "use client";
 
 import { type FormEvent, type ReactNode, useState } from "react";
+import NepaliInput from "@/components/NepaliInput";
 import { errorStyle, input, label, muted, primaryButton, secondaryButton, textarea } from "@/components/ui";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/errors";
+import { districtsOf, localLevelsOf, typeOfLocalLevel } from "@/lib/nepalAddress";
 import { type Child, type Classroom, ETHNICITIES, LOCAL_LEVEL_TYPES, type Option, PROVINCES } from "@/lib/types";
 
 type Props = {
@@ -82,6 +84,11 @@ function Select({ value, onChange, options, empty }: {
   );
 }
 
+/** Keep a saved value visible even if it is not in the list (e.g. typed by hand earlier). */
+function withCurrent(options: Option[], current: string): Option[] {
+  return current && !options.some((o) => o.value === current) ? [{ value: current, label: current }, ...options] : options;
+}
+
 export default function ChildForm({ child, classrooms, onSaved, onCancel }: Props) {
   const [form, setForm] = useState<FormState>(() => toForm(child));
   const [error, setError] = useState("");
@@ -90,6 +97,29 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
 
   function set<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  // --- Address lists depend on the choices above them ---
+  const districts = districtsOf(form.permanent_province).map((d) => ({ value: d, label: d }));
+  const localLevels = localLevelsOf(form.permanent_district, form.permanent_local_level_type);
+
+  function chooseProvince(v: string) {
+    setForm((f) => ({ ...f, permanent_province: v, permanent_district: "", permanent_local_level: "" }));
+  }
+  function chooseDistrict(v: string) {
+    setForm((f) => ({ ...f, permanent_district: v, permanent_local_level: "" }));
+  }
+  function chooseType(v: string) {
+    setForm((f) => ({ ...f, permanent_local_level_type: v, permanent_local_level: "" }));
+  }
+  function chooseLocalLevel(v: string) {
+    const picked = localLevels.find((l) => l.value === v);
+    setForm((f) => ({
+      ...f,
+      permanent_local_level: v,
+      // Picked without a type? Fill the type in from the name ("… Metropolitan City").
+      permanent_local_level_type: f.permanent_local_level_type || (picked ? typeOfLocalLevel(picked.label) : ""),
+    }));
   }
 
   function copyPermanentAddress() {
@@ -157,6 +187,8 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
     onSaved(saved);
   }
 
+  const englishName = `${form.first_name} ${form.last_name}`.trim();
+
   return (
     <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Section title="Student · विद्यार्थी" />
@@ -167,8 +199,8 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
         <input className={input} value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
       </Field>
       <Field text="Full name in Nepali (देवनागरी)">
-        <input className={input} placeholder="सचिन श्रेष्ठ" value={form.full_name_ne}
-          onChange={(e) => set("full_name_ne", e.target.value)} />
+        <NepaliInput value={form.full_name_ne} onChange={(v) => set("full_name_ne", v)}
+          placeholder="सचिन श्रेष्ठ" fromEnglish={englishName} />
       </Field>
       <Field text="Called (nickname)">
         <input className={input} value={form.preferred_name} onChange={(e) => set("preferred_name", e.target.value)} />
@@ -228,22 +260,34 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
           onChange={(e) => set("birth_registration_no", e.target.value)} />
       </Field>
 
-      <Section title="Permanent address · स्थायी ठेगाना" />
+      <Section title="Permanent address · स्थायी ठेगाना"
+        note="Choose the province first, then the district, then the type and name of the local level." />
       <Field text="Province · प्रदेश">
-        <Select value={form.permanent_province} onChange={(v) => set("permanent_province", v)} options={PROVINCES}
-          empty="Choose province" />
+        <Select value={form.permanent_province} onChange={chooseProvince} options={PROVINCES} empty="Choose province" />
       </Field>
       <Field text="District · जिल्ला">
-        <input className={input} placeholder="Kaski" value={form.permanent_district}
-          onChange={(e) => set("permanent_district", e.target.value)} />
+        {districts.length > 0 ? (
+          <Select value={form.permanent_district} onChange={chooseDistrict}
+            options={withCurrent(districts, form.permanent_district)} empty="Choose district" />
+        ) : (
+          <input className={input} placeholder={form.permanent_province ? "Type district" : "Choose a province first"}
+            value={form.permanent_district} onChange={(e) => chooseDistrict(e.target.value)} />
+        )}
       </Field>
       <Field text="Local level type">
-        <Select value={form.permanent_local_level_type} onChange={(v) => set("permanent_local_level_type", v)}
-          options={LOCAL_LEVEL_TYPES} empty="Choose type" />
+        <Select value={form.permanent_local_level_type} onChange={chooseType} options={LOCAL_LEVEL_TYPES}
+          empty="Any type" />
       </Field>
-      <Field text="Municipality name · पालिका">
-        <input className={input} placeholder="Pokhara" value={form.permanent_local_level}
-          onChange={(e) => set("permanent_local_level", e.target.value)} />
+      <Field text="Municipality / Rural municipality · पालिका">
+        {localLevels.length > 0 ? (
+          <Select value={form.permanent_local_level} onChange={chooseLocalLevel}
+            options={withCurrent(localLevels, form.permanent_local_level)}
+            empty={`Choose (${localLevels.length} found)`} />
+        ) : (
+          <input className={input}
+            placeholder={form.permanent_district ? "Type name, e.g. Pokhara" : "Choose a district first"}
+            value={form.permanent_local_level} onChange={(e) => set("permanent_local_level", e.target.value)} />
+        )}
       </Field>
       <Field text="Ward no. · वडा नं.">
         <input className={input} type="number" min={1} max={35} value={form.permanent_ward}
@@ -278,13 +322,14 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
         title="Family · परिवार"
         note={isNew
           ? "Parents with a mobile number are linked automatically and can log in to the KidSathi app."
-          : "Parents' phone numbers and app access are managed below on the child's page."}
+          : "Parents' phone numbers and app access are managed on the child's page."}
       />
       <Field text="Father's name (English)">
         <input className={input} value={form.father_name_en} onChange={(e) => set("father_name_en", e.target.value)} />
       </Field>
       <Field text="बुबाको नाम (नेपाली)">
-        <input className={input} value={form.father_name_ne} onChange={(e) => set("father_name_ne", e.target.value)} />
+        <NepaliInput value={form.father_name_ne} onChange={(v) => set("father_name_ne", v)}
+          placeholder="राम बहादुर श्रेष्ठ" fromEnglish={form.father_name_en} />
       </Field>
       {isNew ? (
         <Field text="Father's mobile">
@@ -296,7 +341,8 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
         <input className={input} value={form.mother_name_en} onChange={(e) => set("mother_name_en", e.target.value)} />
       </Field>
       <Field text="आमाको नाम (नेपाली)">
-        <input className={input} value={form.mother_name_ne} onChange={(e) => set("mother_name_ne", e.target.value)} />
+        <NepaliInput value={form.mother_name_ne} onChange={(v) => set("mother_name_ne", v)}
+          placeholder="सुनिता श्रेष्ठ" fromEnglish={form.mother_name_en} />
       </Field>
       {isNew ? (
         <Field text="Mother's mobile">

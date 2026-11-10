@@ -73,7 +73,7 @@ export default function ChildrenPage() {
         {children && visible.length === 0 ? (
           <p className={muted}>No children found.</p>
         ) : (
-          <table className="w-full text-left">
+          <table className="text-left [&_th]:px-3 [&_td]:px-3">
             <thead className="text-sm text-[#5B6170]">
               <tr>
                 <th className="py-2">Name</th>
