@@ -7,7 +7,8 @@ import { clearSession, getSchool, getSession } from "@/lib/api";
 
 const NAV = [
   { href: "/dashboard", label: "Overview", ready: true },
-  { href: "/dashboard/children", label: "Children", ready: false },
+  { href: "/dashboard/children", label: "Children", ready: true },
+  { href: "/dashboard/classrooms", label: "Classrooms", ready: true },
   { href: "/dashboard/attendance", label: "Attendance", ready: false },
   { href: "/dashboard/fees", label: "Fees & invoices", ready: false },
   { href: "/dashboard/notices", label: "Notices", ready: false },
@@ -48,7 +49,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={`px-3 py-2 rounded-lg font-semibold ${
-                  pathname === item.href ? "bg-[#E9A23B] text-[#1F2A5C]" : "hover:bg-[#2E3B78]"
+                  (item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href)) ? "bg-[#E9A23B] text-[#1F2A5C]" : "hover:bg-[#2E3B78]"
                 }`}
               >
                 {item.label}
