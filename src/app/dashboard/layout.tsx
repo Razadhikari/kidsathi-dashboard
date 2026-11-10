@@ -9,7 +9,7 @@ const NAV = [
   { href: "/dashboard", label: "Overview", ready: true },
   { href: "/dashboard/children", label: "Children", ready: true },
   { href: "/dashboard/classrooms", label: "Classrooms", ready: true },
-  { href: "/dashboard/attendance", label: "Attendance", ready: false },
+  { href: "/dashboard/attendance", label: "Attendance", ready: true },
   { href: "/dashboard/fees", label: "Fees & invoices", ready: false },
   { href: "/dashboard/notices", label: "Notices", ready: false },
   { href: "/dashboard/photos", label: "Photos", ready: false },
