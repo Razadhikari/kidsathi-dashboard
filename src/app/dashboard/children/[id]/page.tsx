@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import {
-  card, dangerButton, errorStyle, input, label, muted, primaryButton, textarea,
-} from "@/components/ui";
+import ChildForm from "@/components/ChildForm";
+import { card, dangerButton, errorStyle, input, label, muted, primaryButton } from "@/components/ui";
 import { api, type Paged } from "@/lib/api";
 import { errorText } from "@/lib/errors";
 import { age, type Child, type Classroom, fullName, RELATIONS } from "@/lib/types";
@@ -18,9 +17,7 @@ export default function ChildPage() {
   const [child, setChild] = useState<Child | null>(null);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [error, setError] = useState("");
-
-  const [details, setDetails] = useState({ preferred_name: "", classroom: "", allergies: "", photo_consent: false });
-  const [detailsMsg, setDetailsMsg] = useState("");
+  const [savedMsg, setSavedMsg] = useState("");
 
   const [parent, setParent] = useState(EMPTY_PARENT);
   const [parentError, setParentError] = useState("");
@@ -33,32 +30,11 @@ export default function ChildPage() {
     ]);
     setChild(c);
     setClassrooms(rooms.results);
-    setDetails({
-      preferred_name: c.preferred_name,
-      classroom: c.classroom ?? "",
-      allergies: c.allergies,
-      photo_consent: c.photo_consent,
-    });
   }, [id]);
 
   useEffect(() => {
     load().catch((err) => setError(errorText(err)));
   }, [load]);
-
-  async function saveDetails(e: FormEvent) {
-    e.preventDefault();
-    setDetailsMsg("");
-    try {
-      await api(`/api/v1/children/${id}/`, {
-        method: "PATCH",
-        json: { ...details, classroom: details.classroom || null },
-      });
-      setDetailsMsg("Saved ✓");
-      await load();
-    } catch (err) {
-      setDetailsMsg(errorText(err));
-    }
-  }
 
   async function addParent(e: FormEvent) {
     e.preventDefault();
@@ -98,38 +74,21 @@ export default function ChildPage() {
         </p>
       </div>
 
-      <form onSubmit={saveDetails} className={`${card} grid grid-cols-1 md:grid-cols-2 gap-4`}>
-        <h2 className="md:col-span-2 text-xl font-bold">Details</h2>
-        <label className={label}>
-          Called (nickname)
-          <input className={input} value={details.preferred_name}
-            onChange={(e) => setDetails({ ...details, preferred_name: e.target.value })} />
-        </label>
-        <label className={label}>
-          Classroom
-          <select className={input} value={details.classroom}
-            onChange={(e) => setDetails({ ...details, classroom: e.target.value })}>
-            <option value="">No classroom</option>
-            {classrooms.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
-        </label>
-        <label className={`${label} md:col-span-2`}>
-          Allergies and health notes (staff and parents only)
-          <textarea className={textarea} value={details.allergies}
-            onChange={(e) => setDetails({ ...details, allergies: e.target.value })} />
-        </label>
-        <label className="flex items-center gap-2 text-sm font-semibold">
-          <input type="checkbox" className="w-5 h-5" checked={details.photo_consent}
-            onChange={(e) => setDetails({ ...details, photo_consent: e.target.checked })} />
-          Parents agree to photos
-        </label>
-        <div className="md:col-span-2 flex items-center gap-3">
-          <button className={primaryButton}>Save details</button>
-          {detailsMsg && <span className="text-sm">{detailsMsg}</span>}
+      <section className={`${card} flex flex-col gap-4`}>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold">Details</h2>
+          {savedMsg && <span className="text-sm text-[#1E5E43] font-semibold">{savedMsg}</span>}
         </div>
-      </form>
+        <ChildForm
+          key={child.id}
+          child={child}
+          classrooms={classrooms}
+          onSaved={(saved) => {
+            setChild(saved);
+            setSavedMsg("Saved ✓");
+          }}
+        />
+      </section>
 
       <section className={`${card} flex flex-col gap-4`}>
         <h2 className="text-xl font-bold">Parents and guardians</h2>
