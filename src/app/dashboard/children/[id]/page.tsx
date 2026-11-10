@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import ChildForm from "@/components/ChildForm";
+import DeleteChildDialog from "@/components/DeleteChildDialog";
 import { card, dangerButton, errorStyle, input, label, muted, primaryButton } from "@/components/ui";
 import { api, type Paged } from "@/lib/api";
 import { errorText } from "@/lib/errors";
@@ -18,6 +19,7 @@ export default function ChildPage() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [error, setError] = useState("");
   const [savedMsg, setSavedMsg] = useState("");
+  const [showDelete, setShowDelete] = useState(false);
 
   const [parent, setParent] = useState(EMPTY_PARENT);
   const [parentError, setParentError] = useState("");
@@ -55,7 +57,16 @@ export default function ChildPage() {
     if (!child || !window.confirm(`Mark ${fullName(child)} as left the school? Their history is kept.`)) return;
     try {
       await api(`/api/v1/children/${id}/`, { method: "DELETE" });
-      router.push("/dashboard/children");
+      await load();
+    } catch (err) {
+      setError(errorText(err));
+    }
+  }
+
+  async function restore() {
+    try {
+      await api(`/api/v1/children/${id}/restore/`, { method: "POST" });
+      await load();
     } catch (err) {
       setError(errorText(err));
     }
@@ -69,10 +80,18 @@ export default function ChildPage() {
       <div>
         <Link href="/dashboard/children" className="text-sm hover:underline">← All children</Link>
         <h1 className="text-3xl font-extrabold mt-1">{fullName(child)}</h1>
+        {child.full_name_ne && <p className="text-lg">{child.full_name_ne}</p>}
         <p className={muted}>
           {age(child.date_of_birth)} · Born {child.date_of_birth ?? "–"} AD / {child.date_of_birth_bs ?? "–"} BS
         </p>
       </div>
+
+      {!child.is_active && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#FCEFD7] p-4">
+          <span className="font-bold">This child has left the school. The record and history are kept.</span>
+          <button className={primaryButton} onClick={restore}>Restore</button>
+        </div>
+      )}
 
       <section className={`${card} flex flex-col gap-4`}>
         <div className="flex items-center gap-3">
@@ -153,12 +172,32 @@ export default function ChildPage() {
       </section>
 
       <section className={`${card} flex flex-wrap items-center justify-between gap-3`}>
-        <div>
-          <h2 className="font-bold">Leaving the school</h2>
-          <p className={`${muted} text-sm`}>The child disappears from lists, but attendance and invoices are kept.</p>
-        </div>
-        <button className={dangerButton} onClick={markAsLeft}>Mark as left</button>
+        {child.is_active ? (
+          <>
+            <div>
+              <h2 className="font-bold">Leaving the school</h2>
+              <p className={`${muted} text-sm`}>The child disappears from lists, but attendance and invoices are kept.</p>
+            </div>
+            <button className={dangerButton} onClick={markAsLeft}>Mark as left</button>
+          </>
+        ) : (
+          <>
+            <div>
+              <h2 className="font-bold">Delete permanently</h2>
+              <p className={`${muted} text-sm`}>Only for mistakes such as duplicates. Not possible if the child has history.</p>
+            </div>
+            <button className={dangerButton} onClick={() => setShowDelete(true)}>Delete permanently</button>
+          </>
+        )}
       </section>
+
+      {showDelete && (
+        <DeleteChildDialog
+          child={child}
+          onClose={() => setShowDelete(false)}
+          onDeleted={() => router.push("/dashboard/children")}
+        />
+      )}
     </div>
   );
 }
