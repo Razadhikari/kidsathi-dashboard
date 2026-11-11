@@ -26,6 +26,9 @@ function toForm(c?: Child) {
     date_of_birth: c?.date_of_birth ?? "",
     date_of_birth_bs: c?.date_of_birth_bs ?? "",
     classroom: c?.classroom ?? "",
+    section: c?.section ?? "",
+    roll_no: c?.roll_no ?? "",
+    iemis_code: c?.iemis_code ?? "",
     enrolled_on: c?.enrolled_on ?? "",
     caste_ethnicity: c?.caste_ethnicity ?? "",
     mother_tongue: c?.mother_tongue ?? "",
@@ -71,14 +74,24 @@ function Field({ text, children, wide }: { text: string; children: ReactNode; wi
   );
 }
 
-function Select({ value, onChange, options, empty }: {
-  value: string; onChange: (v: string) => void; options: Option[]; empty: string;
+function Select({
+  value,
+  onChange,
+  options,
+  empty,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: Option[];
+  empty: string;
 }) {
   return (
     <select className={input} value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="">{empty}</option>
       {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
       ))}
     </select>
   );
@@ -178,8 +191,10 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
             json: { phone_number: p.phone, full_name: p.name || "Parent", relation: p.relation, is_primary: i === 0 },
           });
         } catch (err) {
-          window.alert(`The child was saved, but the ${p.relation} could not be added: ${errorText(err)}\n` +
-            "You can add them on the child's page.");
+          window.alert(
+            `The child was saved, but the ${p.relation} could not be added: ${errorText(err)}\n` +
+              "You can add them on the child's page.",
+          );
         }
       }
     }
@@ -199,103 +214,194 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
         <input className={input} value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
       </Field>
       <Field text="Full name in Nepali (देवनागरी)">
-        <NepaliInput value={form.full_name_ne} onChange={(v) => set("full_name_ne", v)}
-          placeholder="सचिन श्रेष्ठ" fromEnglish={englishName} />
+        <NepaliInput
+          value={form.full_name_ne}
+          onChange={(v) => set("full_name_ne", v)}
+          placeholder="सचिन श्रेष्ठ"
+          fromEnglish={englishName}
+        />
       </Field>
       <Field text="Called (nickname)">
         <input className={input} value={form.preferred_name} onChange={(e) => set("preferred_name", e.target.value)} />
       </Field>
       <Field text="Gender / लिङ्ग">
-        <Select value={form.gender} onChange={(v) => set("gender", v)} empty="Not specified" options={[
-          { value: "female", label: "Female / महिला" },
-          { value: "male", label: "Male / पुरुष" },
-          { value: "other", label: "Other / अन्य" },
-        ]} />
+        <Select
+          value={form.gender}
+          onChange={(v) => set("gender", v)}
+          empty="Not specified"
+          options={[
+            { value: "female", label: "Female / महिला" },
+            { value: "male", label: "Male / पुरुष" },
+            { value: "other", label: "Other / अन्य" },
+          ]}
+        />
       </Field>
       <Field text="Contact number">
-        <input className={input} placeholder="98XXXXXXXX" value={form.contact_phone}
-          onChange={(e) => set("contact_phone", e.target.value)} />
+        <input
+          className={input}
+          placeholder="98XXXXXXXX"
+          value={form.contact_phone}
+          onChange={(e) => set("contact_phone", e.target.value)}
+        />
       </Field>
 
       <Section title="Birthday · जन्म मिति" note="Fill in one of them. A BS date is converted to AD automatically." />
       <Field text="Date of birth (BS) · वि.सं.">
-        <input className={input} placeholder="2079-05-14" value={form.date_of_birth_bs}
-          onChange={(e) => set("date_of_birth_bs", e.target.value)} />
+        <input
+          className={input}
+          placeholder="2079-05-14"
+          value={form.date_of_birth_bs}
+          onChange={(e) => set("date_of_birth_bs", e.target.value)}
+        />
       </Field>
       <Field text="Date of birth (AD) · ई.सं.">
-        <input className={input} type="date" value={form.date_of_birth}
-          onChange={(e) => set("date_of_birth", e.target.value)} />
+        <input
+          className={input}
+          type="date"
+          value={form.date_of_birth}
+          onChange={(e) => set("date_of_birth", e.target.value)}
+        />
       </Field>
       <div />
 
-      <Section title="School · विद्यालय" />
+      <Section title="School · विद्यालय" note="Class, section and roll no. are printed on fee bills and receipts." />
       <Field text="Class / कक्षा">
         <select className={input} value={form.classroom} onChange={(e) => set("classroom", e.target.value)}>
           <option value="">No classroom yet</option>
           {classrooms.map((r) => (
-            <option key={r.id} value={r.id}>{r.name}</option>
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
           ))}
         </select>
       </Field>
+      <Field text="Section / वर्ग">
+        <input className={input} placeholder="A" value={form.section} onChange={(e) => set("section", e.target.value)} />
+      </Field>
+      <Field text="Roll no. / रोल नं">
+        <input className={input} placeholder="12" value={form.roll_no} onChange={(e) => set("roll_no", e.target.value)} />
+      </Field>
+      <Field text="IEMIS student code">
+        <input
+          className={input}
+          placeholder="4001230017"
+          value={form.iemis_code}
+          onChange={(e) => set("iemis_code", e.target.value)}
+        />
+      </Field>
       <Field text="Enrolled on">
-        <input className={input} type="date" value={form.enrolled_on} onChange={(e) => set("enrolled_on", e.target.value)} />
+        <input
+          className={input}
+          type="date"
+          value={form.enrolled_on}
+          onChange={(e) => set("enrolled_on", e.target.value)}
+        />
       </Field>
       <label className="flex items-center gap-2 text-sm font-semibold md:mt-6">
-        <input type="checkbox" className="w-5 h-5" checked={form.photo_consent}
-          onChange={(e) => set("photo_consent", e.target.checked)} />
+        <input
+          type="checkbox"
+          className="w-5 h-5"
+          checked={form.photo_consent}
+          onChange={(e) => set("photo_consent", e.target.checked)}
+        />
         Parents agree to photos
       </label>
 
-      <Section title="Background" note="Caste/ethnicity and the birth registration number are visible to school admins only." />
+      <Section
+        title="Background"
+        note="Caste/ethnicity and the birth registration number are visible to school admins only."
+      />
       <Field text="Caste / ethnicity · जात/जाति">
-        <Select value={form.caste_ethnicity} onChange={(v) => set("caste_ethnicity", v)} options={ETHNICITIES}
-          empty="Not specified" />
+        <Select
+          value={form.caste_ethnicity}
+          onChange={(v) => set("caste_ethnicity", v)}
+          options={ETHNICITIES}
+          empty="Not specified"
+        />
       </Field>
       <Field text="Mother tongue · मातृभाषा">
-        <input className={input} placeholder="Nepali, Newari, Maithili…" value={form.mother_tongue}
-          onChange={(e) => set("mother_tongue", e.target.value)} />
+        <input
+          className={input}
+          placeholder="Nepali, Newari, Maithili…"
+          value={form.mother_tongue}
+          onChange={(e) => set("mother_tongue", e.target.value)}
+        />
       </Field>
       <Field text="Birth registration no. · जन्मदर्ता नं.">
-        <input className={input} placeholder="67-01-78-01234" value={form.birth_registration_no}
-          onChange={(e) => set("birth_registration_no", e.target.value)} />
+        <input
+          className={input}
+          placeholder="67-01-78-01234"
+          value={form.birth_registration_no}
+          onChange={(e) => set("birth_registration_no", e.target.value)}
+        />
       </Field>
 
-      <Section title="Permanent address · स्थायी ठेगाना"
-        note="Choose the province first, then the district, then the type and name of the local level." />
+      <Section
+        title="Permanent address · स्थायी ठेगाना"
+        note="Choose the province first, then the district, then the type and name of the local level."
+      />
       <Field text="Province · प्रदेश">
         <Select value={form.permanent_province} onChange={chooseProvince} options={PROVINCES} empty="Choose province" />
       </Field>
       <Field text="District · जिल्ला">
         {districts.length > 0 ? (
-          <Select value={form.permanent_district} onChange={chooseDistrict}
-            options={withCurrent(districts, form.permanent_district)} empty="Choose district" />
+          <Select
+            value={form.permanent_district}
+            onChange={chooseDistrict}
+            options={withCurrent(districts, form.permanent_district)}
+            empty="Choose district"
+          />
         ) : (
-          <input className={input} placeholder={form.permanent_province ? "Type district" : "Choose a province first"}
-            value={form.permanent_district} onChange={(e) => chooseDistrict(e.target.value)} />
+          <input
+            className={input}
+            placeholder={form.permanent_province ? "Type district" : "Choose a province first"}
+            value={form.permanent_district}
+            onChange={(e) => chooseDistrict(e.target.value)}
+          />
         )}
       </Field>
       <Field text="Local level type">
-        <Select value={form.permanent_local_level_type} onChange={chooseType} options={LOCAL_LEVEL_TYPES}
-          empty="Any type" />
+        <Select
+          value={form.permanent_local_level_type}
+          onChange={chooseType}
+          options={LOCAL_LEVEL_TYPES}
+          empty="Any type"
+        />
       </Field>
       <Field text="Municipality / Rural municipality · पालिका">
         {localLevels.length > 0 ? (
-          <Select value={form.permanent_local_level} onChange={chooseLocalLevel}
+          <Select
+            value={form.permanent_local_level}
+            onChange={chooseLocalLevel}
             options={withCurrent(localLevels, form.permanent_local_level)}
-            empty={`Choose (${localLevels.length} found)`} />
+            empty={`Choose (${localLevels.length} found)`}
+          />
         ) : (
-          <input className={input}
+          <input
+            className={input}
             placeholder={form.permanent_district ? "Type name, e.g. Pokhara" : "Choose a district first"}
-            value={form.permanent_local_level} onChange={(e) => set("permanent_local_level", e.target.value)} />
+            value={form.permanent_local_level}
+            onChange={(e) => set("permanent_local_level", e.target.value)}
+          />
         )}
       </Field>
       <Field text="Ward no. · वडा नं.">
-        <input className={input} type="number" min={1} max={35} value={form.permanent_ward}
-          onChange={(e) => set("permanent_ward", e.target.value)} />
+        <input
+          className={input}
+          type="number"
+          min={1}
+          max={35}
+          value={form.permanent_ward}
+          onChange={(e) => set("permanent_ward", e.target.value)}
+        />
       </Field>
       <Field text="Tole / street · टोल">
-        <input className={input} placeholder="Srijana Chowk" value={form.permanent_tole}
-          onChange={(e) => set("permanent_tole", e.target.value)} />
+        <input
+          className={input}
+          placeholder="Srijana Chowk"
+          value={form.permanent_tole}
+          onChange={(e) => set("permanent_tole", e.target.value)}
+        />
       </Field>
       <Field text="House no. · घर नं.">
         <input className={input} value={form.house_no} onChange={(e) => set("house_no", e.target.value)} />
@@ -304,52 +410,84 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
         <input className={input} value={form.city} onChange={(e) => set("city", e.target.value)} />
       </Field>
       <Field text="Postal code">
-        <input className={input} placeholder="33700" value={form.postal_code}
-          onChange={(e) => set("postal_code", e.target.value)} />
+        <input
+          className={input}
+          placeholder="33700"
+          value={form.postal_code}
+          onChange={(e) => set("postal_code", e.target.value)}
+        />
       </Field>
 
       <Section title="Current address · अस्थायी ठेगाना" />
       <div className="md:col-span-3 flex flex-wrap gap-3 items-end">
         <label className={`${label} flex-1 min-w-64`}>
           Current / temporary address
-          <input className={input} placeholder="Tole, municipality, district" value={form.current_address}
-            onChange={(e) => set("current_address", e.target.value)} />
+          <input
+            className={input}
+            placeholder="Tole, municipality, district"
+            value={form.current_address}
+            onChange={(e) => set("current_address", e.target.value)}
+          />
         </label>
-        <button type="button" className={secondaryButton} onClick={copyPermanentAddress}>Same as permanent</button>
+        <button type="button" className={secondaryButton} onClick={copyPermanentAddress}>
+          Same as permanent
+        </button>
       </div>
 
       <Section
         title="Family · परिवार"
-        note={isNew
-          ? "Parents with a mobile number are linked automatically and can log in to the KidSathi app."
-          : "Parents' phone numbers and app access are managed on the child's page."}
+        note={
+          isNew
+            ? "Parents with a mobile number are linked automatically and can log in to the KidSathi app."
+            : "Parents' phone numbers and app access are managed on the child's page."
+        }
       />
       <Field text="Father's name (English)">
         <input className={input} value={form.father_name_en} onChange={(e) => set("father_name_en", e.target.value)} />
       </Field>
       <Field text="बुबाको नाम (नेपाली)">
-        <NepaliInput value={form.father_name_ne} onChange={(v) => set("father_name_ne", v)}
-          placeholder="राम बहादुर श्रेष्ठ" fromEnglish={form.father_name_en} />
+        <NepaliInput
+          value={form.father_name_ne}
+          onChange={(v) => set("father_name_ne", v)}
+          placeholder="राम बहादुर श्रेष्ठ"
+          fromEnglish={form.father_name_en}
+        />
       </Field>
       {isNew ? (
         <Field text="Father's mobile">
-          <input className={input} placeholder="98XXXXXXXX" value={form.father_phone}
-            onChange={(e) => set("father_phone", e.target.value)} />
+          <input
+            className={input}
+            placeholder="98XXXXXXXX"
+            value={form.father_phone}
+            onChange={(e) => set("father_phone", e.target.value)}
+          />
         </Field>
-      ) : <div />}
+      ) : (
+        <div />
+      )}
       <Field text="Mother's name (English)">
         <input className={input} value={form.mother_name_en} onChange={(e) => set("mother_name_en", e.target.value)} />
       </Field>
       <Field text="आमाको नाम (नेपाली)">
-        <NepaliInput value={form.mother_name_ne} onChange={(v) => set("mother_name_ne", v)}
-          placeholder="सुनिता श्रेष्ठ" fromEnglish={form.mother_name_en} />
+        <NepaliInput
+          value={form.mother_name_ne}
+          onChange={(v) => set("mother_name_ne", v)}
+          placeholder="सुनिता श्रेष्ठ"
+          fromEnglish={form.mother_name_en}
+        />
       </Field>
       {isNew ? (
         <Field text="Mother's mobile">
-          <input className={input} placeholder="98XXXXXXXX" value={form.mother_phone}
-            onChange={(e) => set("mother_phone", e.target.value)} />
+          <input
+            className={input}
+            placeholder="98XXXXXXXX"
+            value={form.mother_phone}
+            onChange={(e) => set("mother_phone", e.target.value)}
+          />
         </Field>
-      ) : <div />}
+      ) : (
+        <div />
+      )}
 
       <Section title="Health" />
       <Field text="Allergies and health notes (staff and parents only)" wide>
@@ -362,7 +500,9 @@ export default function ChildForm({ child, classrooms, onSaved, onCancel }: Prop
           {saving ? "Saving…" : isNew ? "Add child" : "Save changes"}
         </button>
         {onCancel && (
-          <button type="button" className={secondaryButton} onClick={onCancel}>Cancel</button>
+          <button type="button" className={secondaryButton} onClick={onCancel}>
+            Cancel
+          </button>
         )}
       </div>
     </form>

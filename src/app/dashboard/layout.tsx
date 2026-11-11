@@ -10,9 +10,10 @@ const NAV = [
   { href: "/dashboard/children", label: "Children", ready: true },
   { href: "/dashboard/classrooms", label: "Classrooms", ready: true },
   { href: "/dashboard/attendance", label: "Attendance", ready: true },
-  { href: "/dashboard/fees", label: "Fees & invoices", ready: false },
+  { href: "/dashboard/fees", label: "Fees & invoices", ready: true },
   { href: "/dashboard/notices", label: "Notices", ready: false },
   { href: "/dashboard/photos", label: "Photos", ready: false },
+  { href: "/dashboard/settings", label: "School settings", ready: true },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
