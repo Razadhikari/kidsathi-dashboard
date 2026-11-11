@@ -19,6 +19,9 @@ export type Child = {
   gender: string;
   contact_phone: string;
   classroom: string | null;
+  section: string;
+  roll_no: string;
+  iemis_code: string;
   enrolled_on: string | null;
   caste_ethnicity?: string; // only sent to school admins
   mother_tongue: string;
